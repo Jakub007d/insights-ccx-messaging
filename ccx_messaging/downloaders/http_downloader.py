@@ -18,6 +18,7 @@ import logging
 import re
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
+import json
 
 import requests
 
@@ -90,6 +91,7 @@ class HTTPDownloader:
     @contextmanager
     def get(self, src):
         """Download a file from HTTP server and store it in a temporary file."""
+        LOG.error("Using right ccx-messaging")
         if not self.allow_unsafe_links:
             if src is None or not HTTPDownloader.HTTP_RE.fullmatch(src):
                 LOG.warning("Invalid URL format: %s", src)
@@ -97,7 +99,7 @@ class HTTPDownloader:
 
         try:
             response = requests.get(src)
-            data = response.content
+            data = response.json()
             size = len(data)
 
             if size == 0:
