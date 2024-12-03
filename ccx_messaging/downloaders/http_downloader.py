@@ -101,7 +101,9 @@ class HTTPDownloader:
             response = requests.get(src)
             data = response.content
             LOG.error("Full Response Body: %s", repr(response))
-            LOG.error("Full Response Content: %s", response.contnent)
+            LOG.error("Hedders: %s", response.headers)
+            LOG.error("Full Response Content: %s", response.content)
+            LOG.error("Full response: %s", response.raw)
             size = len(data)
 
             if size == 0:
