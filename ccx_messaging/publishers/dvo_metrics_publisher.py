@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 
 
 class DVOMetricsPublisher(KafkaPublisher):
+    log = logging.getLogger(__name__)
     """DVOMetricsPublisher handles the result of the extraction of DVO metrics from an archive."""
 
     def publish(self, input_msg: Dict, report: str) -> None:
@@ -40,6 +41,8 @@ class DVOMetricsPublisher(KafkaPublisher):
 
         try:
             report = json.loads(report)
+            json_formatted_str = json.dumps(report, indent=2)
+            log.info(json_formatted_str)
         except (TypeError, json.decoder.JSONDecodeError) as err:
             raise CCXMessagingError("Could not parse report; report is not in JSON format") from err
 
