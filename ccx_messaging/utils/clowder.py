@@ -82,6 +82,7 @@ def _add_kafka_config(config):
 
     if configure_consumer:
         config["service"]["consumer"]["kwargs"]["kafka_broker_config"] = kafka_broker_config
+        print("Kafka broker config: "kafka_broker_config)
         consumer_topic = config["service"]["consumer"]["kwargs"].get("incoming_topic")
         dlq_topic = config["service"]["consumer"]["kwargs"].get("dead_letter_queue_topic")
         if consumer_topic in app_common_python.KafkaTopics:
