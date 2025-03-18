@@ -123,7 +123,8 @@ def _update_bucket_config(bucket_name, configuration):
         return
 
     prefix = "https://" if common_config.tls else "http://"
-
+    print("I have got bucket: " + bucket_name)
+    print("all buckets are " + str(buckets))
     if bucket_name in buckets:
         bucket_config = buckets[bucket_name]
         configuration["access_key"] = bucket_config.accessKey
@@ -143,6 +144,8 @@ def _add_buckets_config(config):
     # Handle downloader config
     downloader = config.get("service", {}).get("downloader", {})
     if downloader.get("name") == "ccx_messaging.downloaders.s3_downloader.S3Downloader":
-        print("S3Downloader konfig found "+ str(config.get("service", {}).get("downloader", {})))
+        print("S3Downloader konfig found " + str(config.get("service", {}).get("downloader", {})))
         s3downloader_config = downloader.get("kwargs", {})
+        print("Here is kwargs" + str(s3downloader_config))
+        print("And here is the bucket" + str(s3downloader_config.get("bucket")))
         _update_bucket_config(s3downloader_config.get("bucket"), s3downloader_config)
