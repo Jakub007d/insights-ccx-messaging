@@ -143,5 +143,6 @@ def _add_buckets_config(config):
     # Handle downloader config
     downloader = config.get("service", {}).get("downloader", {})
     if downloader.get("name") == "ccx_messaging.downloaders.s3_downloader.S3Downloader":
+        print("S3Downloader konfig found "+ str(config.get("service", {}).get("downloader", {})))
         s3downloader_config = downloader.get("kwargs", {})
         _update_bucket_config(s3downloader_config.get("bucket"), s3downloader_config)
