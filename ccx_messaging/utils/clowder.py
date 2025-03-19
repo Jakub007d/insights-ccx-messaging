@@ -137,7 +137,7 @@ def _update_bucket_config(bucket_name, configuration):
 def _add_buckets_config(config):
     # Handle engine config
     engine = config.get("service", {}).get("engine", {})
-    if engine is not None:
+    if engine:
         engine_config = engine.get("kwargs", {})
         _update_bucket_config(engine_config.get("dest_bucket"), engine_config)
 
