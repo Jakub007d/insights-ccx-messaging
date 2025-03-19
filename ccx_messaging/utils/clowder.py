@@ -123,7 +123,7 @@ def _update_bucket_config(bucket_name, configuration):
         return
 
     prefix = "https://" if common_config.tls else "http://"
-    print("I have got bucket: " + bucket_name)
+    print(bucket_name)
     print("all buckets are " + buckets)
     if bucket_name in buckets:
         bucket_config = buckets[bucket_name]
