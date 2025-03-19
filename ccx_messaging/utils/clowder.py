@@ -124,7 +124,7 @@ def _update_bucket_config(bucket_name, configuration):
 
     prefix = "https://" if common_config.tls else "http://"
     print("I have got bucket: " + bucket_name)
-    print("all buckets are " + str(buckets))
+    print("all buckets are " + buckets)
     if bucket_name in buckets:
         bucket_config = buckets[bucket_name]
         configuration["access_key"] = bucket_config.accessKey
