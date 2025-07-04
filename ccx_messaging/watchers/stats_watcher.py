@@ -19,6 +19,9 @@ import os
 import tarfile
 import time
 import json
+import sys
+import psutil
+import gc
 
 from insights.core.archives import TarExtractor, ZipExtractor
 from insights_messaging.watchers import EngineWatcher
@@ -126,6 +129,17 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
         # to extract the archive in order to know that information
         # TODO: Change to archive metadata dict, with archive type and archive size
         self._archive_metadata = {"type": "ocp", "size": 0, "s3_path": ""}
+        # Memory tracking
+        self._memory_log_interval = int(os.environ.get('STATS_MEMORY_LOG_INTERVAL', '100'))  # Log every N processed archives
+        self._processed_count = 0
+        self._process = psutil.Process()
+        
+        # Log initial memory state
+        LOG.info("StatsWatcher initialized - Memory logging enabled every %d processed archives", self._memory_log_interval)
+
+        
+        # Log initial memory state
+        LOG.info("StatsWatcher initialized - Memory logging enabled every %d processed archives", self._memory_log_interval)
 
         self._initialize_metrics_with_labels()
 
@@ -248,6 +262,10 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
         self._publish_duration.labels(
             **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
         ).observe(self._published_time - self._processed_time)
+                # Track processed archives and log memory usage periodically
+        self._processed_count += 1
+        if self._processed_count % self._memory_log_interval == 0:
+            self._log_memory_usage()
 
     def on_consumer_failure(self, input_msg, exception):
         """On consumer failure event handler."""
@@ -267,6 +285,10 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
         self._publish_duration.labels(
             **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
         ).observe(0)
+        # Track processed archives and log memory usage periodically
+        self._processed_count += 1
+        if self._processed_count % self._memory_log_interval == 0:
+            self._log_memory_usage()
 
     def on_not_handled(self, input_msg):
         """On not handled messages success event handler."""
@@ -301,7 +323,73 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
             self._process_duration.labels(val)
             self._publish_duration.labels(val)
             self._processed_timeout_total.labels(val)
+    def _log_memory_usage(self):
+        """Log detailed memory usage of histograms and process."""
+        try:
+            # Get process memory info
+            memory_info = self._process.memory_info()
+            memory_mb = memory_info.rss / (1024 * 1024)  # Convert to MB
+            
+            # Get histogram memory usage
+            histogram_sizes = {}
+            
+            # Calculate size of histogram objects and their internal data
+            histograms = [
+                ('downloaded_total', self._downloaded_total),
+                ('archive_size', self._archive_size),
+                ('download_duration', self._download_duration),
+                ('process_duration', self._process_duration),
+                ('publish_duration', self._publish_duration)
+            ]
+            
+            total_histogram_size = 0
+            for name, histogram in histograms:
+                # Get size of the histogram object itself
+                hist_size = sys.getsizeof(histogram)
+                
+                # Try to get size of internal data structures
+                try:
+                    # Access internal prometheus client data
+                    if hasattr(histogram, '_samples'):
+                        hist_size += sys.getsizeof(histogram._samples)
+                    if hasattr(histogram, '_buckets'):
+                        hist_size += sys.getsizeof(histogram._buckets)
+                    if hasattr(histogram, '_labelnames'):
+                        hist_size += sys.getsizeof(histogram._labelnames)
+                    if hasattr(histogram, '_labelvalues'):
+                        hist_size += sys.getsizeof(histogram._labelvalues)
+                        # Get size of each label combination's data
+                        for label_combo in histogram._labelvalues:
+                            hist_size += sys.getsizeof(label_combo)
+                except:
+                    pass  # If we can't access internals, just use object size
+                
+                histogram_sizes[name] = hist_size
+                total_histogram_size += hist_size
+            
+            # Log memory usage
+            LOG.info("=== MEMORY USAGE REPORT (after %d processed archives) ===", self._processed_count)
+            LOG.info("Process RSS Memory: %.2f MB", memory_mb)
+            LOG.info("Total Histogram Memory: %.2f KB", total_histogram_size / 1024)
+            
+            for name, size in histogram_sizes.items():
+                LOG.info("  %s: %.2f KB", name, size / 1024)
+            
+            # Log some additional stats
+            LOG.info("Python objects count: %d", len(gc.get_objects()))
+            LOG.info("Tracked versions count: %d", len(self._tracked_versions))
+            LOG.info("=====================================")
+            
+        except Exception as e:
+            LOG.error("Error logging memory usage: %s", e)
 
+    def log_memory_usage_now(self):
+        """Force memory usage logging immediately (useful for testing/debugging)."""
+        self._log_memory_usage()  
+    def log_memory_usage_now(self):
+        """Force memory usage logging immediately (useful for testing/debugging)."""
+        self._log_memory_usage()
+  
     def __del__(self):
         """Destructor for handling counters unregistering."""
         REGISTRY.unregister(self._recv_total)
