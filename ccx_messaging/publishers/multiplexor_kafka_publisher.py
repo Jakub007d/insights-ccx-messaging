@@ -82,3 +82,4 @@ class MultiplexorPublisher(Publisher):
                 continue
 
             self.produce(json.dumps(input_msg).strip().encode(), topic)
+        self.producer.flush()
