@@ -32,8 +32,77 @@ LOG = logging.getLogger(__name__)
 ARCHIVE_TYPE_LABEL = "archive"
 ARCHIVE_TYPE_VALUES = ["ocp", "hypershift", "ols"]
 IO_GATHERING_REMOTE_CONFIG_LABEL = "version"
+RECV_TOTAL = Counter(
+            "ccx_consumer_received_total", "Counter of received Kafka messages"
+        )
+FILTERED_TOTAL = Counter(
+            "ccx_consumer_filtered_total", "Counter of filtered Kafka messages"
+        )
+DOWNLOADED_TOTAL = Histogram(
+            "ccx_downloaded_total", "Histogram of the size of downloaded items"
+        )
+ARCHIVE_SIZE = Histogram(
+    "ccx_consumer_archive_size",
+    "Histogram of the size of downloaded archive with archive type label",
+    [ARCHIVE_TYPE_LABEL],
+)
 
+EXTRACTED_TOTAL = Counter(
+    "ccx_consumer_extracted_total",
+    "Counter of extracted archives",
+    [ARCHIVE_TYPE_LABEL],
+)
 
+PROCESSED_TOTAL = Counter(
+    "ccx_engine_processed_total",
+    "Counter of files processed by the OCP Engine",
+    [ARCHIVE_TYPE_LABEL],
+)
+
+PUBLISHED_TOTAL = Counter(
+    "ccx_published_total",
+    "Counter of reports successfully published",
+    [ARCHIVE_TYPE_LABEL],
+)
+
+FAILURES_TOTAL = Counter(
+    "ccx_failures_total",
+    "Counter of failures during the pipeline",
+    [ARCHIVE_TYPE_LABEL],
+)
+
+NOT_HANDLING_TOTAL = Counter(
+    "ccx_not_handled_total",
+    "Counter of received elements that are not handled by the pipeline",
+)
+
+DOWNLOAD_DURATION = Histogram(
+    "ccx_download_duration_seconds", "Histogram of archive download durations"
+)
+
+PROCESS_DURATION = Histogram(
+    "ccx_process_duration_seconds",
+    "Histogram of durations of processing archives by the OCP engine",
+    [ARCHIVE_TYPE_LABEL],
+)
+
+PUBLISH_DURATION = Histogram(
+    "ccx_publish_duration_seconds",
+    "Histogram of durations of publishing the OCP engine results",
+    [ARCHIVE_TYPE_LABEL],
+)
+
+PROCESSED_TIMEOUT_TOTAL = Counter(
+    "ccx_engine_processed_timeout_total",
+    "Counter of timeouts while processing archives",
+    [ARCHIVE_TYPE_LABEL],
+)
+
+GATHERING_CONDITIONS_REMOTE_CONFIGURATION_VERSION = Counter(
+    "gathering_conditions_remote_configuration_version",
+    "Counter of times a given configuration is seen",
+    [IO_GATHERING_REMOTE_CONFIG_LABEL],
+)
 # pylint: disable=too-many-instance-attributes
 class StatsWatcher(ConsumerWatcher, EngineWatcher):
     """A Watcher that stores different Prometheus `Counter`s."""
@@ -41,82 +110,6 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
     def __init__(self, prometheus_port=8000):
         """Create the needed Counter objects and start serving Prometheus stats."""
         super().__init__()
-
-        self._recv_total = Counter(
-            "ccx_consumer_received_total", "Counter of received Kafka messages"
-        )
-
-        self._filtered_total = Counter(
-            "ccx_consumer_filtered_total", "Counter of filtered Kafka messages"
-        )
-
-        self._downloaded_total = Histogram(
-            "ccx_downloaded_total", "Histogram of the size of downloaded items"
-        )
-
-        self._archive_size = Histogram(
-            "ccx_consumer_archive_size",
-            "Histogram of the size of downloaded archive with archive type label",
-            [ARCHIVE_TYPE_LABEL],
-        )
-
-        self._extracted_total = Counter(
-            "ccx_consumer_extracted_total",
-            "Counter of extracted archives",
-            [ARCHIVE_TYPE_LABEL],
-        )
-
-        self._processed_total = Counter(
-            "ccx_engine_processed_total",
-            "Counter of files processed by the OCP Engine",
-            [ARCHIVE_TYPE_LABEL],
-        )
-
-        self._published_total = Counter(
-            "ccx_published_total",
-            "Counter of reports successfully published",
-            [ARCHIVE_TYPE_LABEL],
-        )
-
-        self._failures_total = Counter(
-            "ccx_failures_total",
-            "Counter of failures during the pipeline",
-            [ARCHIVE_TYPE_LABEL],
-        )
-
-        self._not_handling_total = Counter(
-            "ccx_not_handled_total",
-            "Counter of received elements that are not handled by the pipeline",
-        )
-
-        self._download_duration = Histogram(
-            "ccx_download_duration_seconds", "Histogram of archive download durations"
-        )
-
-        self._process_duration = Histogram(
-            "ccx_process_duration_seconds",
-            "Histogram of durations of processing archives by the OCP engine",
-            [ARCHIVE_TYPE_LABEL],
-        )
-
-        self._publish_duration = Histogram(
-            "ccx_publish_duration_seconds",
-            "Histogram of durations of publishing the OCP engine results",
-            [ARCHIVE_TYPE_LABEL],
-        )
-
-        self._processed_timeout_total = Counter(
-            "ccx_engine_processed_timeout_total",
-            "Counter of timeouts while processing archives",
-            [ARCHIVE_TYPE_LABEL],
-        )
-
-        self._gathering_conditions_remote_configuration_version = Counter(
-            "gathering_conditions_remote_configuration_version",
-            "Counter of times a given configuration is seen",
-            [IO_GATHERING_REMOTE_CONFIG_LABEL],
-        )
-
         self._start_time = None
         self._downloaded_time = None
         self._processed_time = None
@@ -301,20 +294,3 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
             self._process_duration.labels(val)
             self._publish_duration.labels(val)
             self._processed_timeout_total.labels(val)
-
-    def __del__(self):
-        """Destructor for handling counters unregistering."""
-        REGISTRY.unregister(self._recv_total)
-        REGISTRY.unregister(self._filtered_total)
-        REGISTRY.unregister(self._downloaded_total)
-        REGISTRY.unregister(self._archive_size)
-        REGISTRY.unregister(self._extracted_total)
-        REGISTRY.unregister(self._processed_total)
-        REGISTRY.unregister(self._published_total)
-        REGISTRY.unregister(self._failures_total)
-        REGISTRY.unregister(self._not_handling_total)
-        REGISTRY.unregister(self._download_duration)
-        REGISTRY.unregister(self._process_duration)
-        REGISTRY.unregister(self._publish_duration)
-        REGISTRY.unregister(self._processed_timeout_total)
-        REGISTRY.unregister(self._gathering_conditions_remote_configuration_version)
