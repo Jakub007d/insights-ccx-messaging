@@ -221,7 +221,7 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
         PROCESSED_TOTAL.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
 
         self._processed_time = time.time()
-        PROCESSED_TOTAL.labels(
+        PROCESS_DURATION.labels(
             **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
         ).observe(self._processed_time - self._downloaded_time)
 
