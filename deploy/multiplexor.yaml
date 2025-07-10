@@ -136,12 +136,7 @@ objects:
             outgoing_topics:
               OLS: ${KAFKA_OUTGOING_TOPIC_OLS}
               DEFAULT: ${KAFKA_OUTGOING_TOPIC_IO}
-        watchers:
-          - name: ccx_messaging.watchers.payload_tracker_watcher.PayloadTrackerWatcher
-            kwargs:
-              bootstrap.servers: ${KAFKA_SERVER}
-              topic: ${PAYLOAD_TRACKER_TOPIC}
-              service_name: multiplexor
+        watchers: []
         logging:
           version: 1
           disable_existing_loggers: false
@@ -240,17 +235,17 @@ parameters:
   value: 256Mi
 
 - name: LOGLEVEL_CCX_MESSAGING
-  value: INFO
+  value: DEBUG
 - name: LOGLEVEL_INSIGHTS_MESSAGING
-  value: WARNING
+  value: DEBUG
 - name: LOGLEVEL_INSIGHTS
-  value: WARNING
+  value: DEBUG
 - name: LOGLEVEL_KAFKA
-  value: INFO
+  value: DEBUG
 - name: LOGLEVEL_STDOUT
-  value: INFO
+  value: DEBUG
 - name: LOGLEVEL_ROOT
-  value: WARNING
+  value: DEBUG
 - name: LOGGING_TO_CW_ENABLED
   value: "true"
 
