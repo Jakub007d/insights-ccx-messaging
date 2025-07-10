@@ -147,7 +147,7 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
     def on_filter(self):
         """On filter event handler."""
         LOG.debug("Receiving 'on_filter' callback")
-        self._filtered_total.inc()
+        FILTERED_TOTAL.inc()
 
     def on_extract(
         self, ctx, broker, extraction: tarfile.TarFile | TarExtractor | ZipExtractor
@@ -178,9 +178,9 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
         elif os.path.exists(os.path.join(extraction.tmp_dir, "config", "infrastructure.json")):
             self._archive_metadata["type"] = "hypershift"
 
-        self._extracted_total.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
+        EXTRACTED_TOTAL.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
 
-        self._archive_size.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).observe(
+        ARCHIVE_SIZE.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).observe(
             self._archive_metadata["size"]
         )
 
@@ -210,61 +210,61 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
         archive_size = os.path.getsize(path)
 
         self._archive_metadata["size"] = archive_size
-        self._downloaded_total.observe(archive_size)
+        DOWNLOADED_TOTAL.observe(archive_size)
 
         self._downloaded_time = time.time()
-        self._download_duration.observe(self._downloaded_time - self._start_time)
+        DOWNLOAD_DURATION.observe(self._downloaded_time - self._start_time)
 
     def on_process(self, input_msg, results):
         """On processed event handler."""
         LOG.debug("Receiving 'on_process' callback")
-        self._processed_total.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
+        PROCESSED_TOTAL.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
 
         self._processed_time = time.time()
-        self._process_duration.labels(
+        PROCESSED_TOTAL.labels(
             **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
         ).observe(self._processed_time - self._downloaded_time)
 
     def on_process_timeout(self):
         """On process timeout event handler."""
         LOG.debug("Receiving 'on_process_timeout' callback")
-        self._processed_timeout_total.labels(
+        PROCESSED_TIMEOUT_TOTAL.labels(
             **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
         ).inc()
 
     def on_consumer_success(self, input_msg, broker, results):
         """On consumer success event handler."""
         LOG.debug("Receiving 'on_consumer_success' callback")
-        self._published_total.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
+        PUBLISHED_TOTAL.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
 
         self._published_time = time.time()
-        self._publish_duration.labels(
+        PUBLISH_DURATION.labels(
             **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
         ).observe(self._published_time - self._processed_time)
 
     def on_consumer_failure(self, input_msg, exception):
         """On consumer failure event handler."""
         LOG.debug("Receiving 'on_consumer_failure' callback")
-        self._failures_total.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
+        FAILURES_TOTAL.labels(**{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}).inc()
 
         if self._downloaded_time is None:
-            self._download_duration.observe(time.time() - self._start_time)
-            self._process_duration.labels(
+            DOWNLOAD_DURATION.observe(time.time() - self._start_time)
+            PROCESS_DURATION.labels(
                 **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
             ).observe(0)
         elif self._processed_time is None:
-            self._process_duration.labels(
+            PROCESS_DURATION.labels(
                 **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
             ).observe(time.time() - self._downloaded_time)
 
-        self._publish_duration.labels(
+        PUBLISH_DURATION.labels(
             **{ARCHIVE_TYPE_LABEL: self._archive_metadata["type"]}
         ).observe(0)
 
     def on_not_handled(self, input_msg):
         """On not handled messages success event handler."""
         LOG.debug("Receiving 'on_not_handled' callback")
-        self._not_handling_total.inc()
+        NOT_HANDLING_TOTAL.inc()
 
     def _reset_times(self):
         """Set all timestamps with the exception of start time to `None`."""
@@ -286,11 +286,11 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
         order to initialize them.
         """
         for val in ARCHIVE_TYPE_VALUES:
-            self._extracted_total.labels(val)
-            self._archive_size.labels(val)
-            self._processed_total.labels(val)
-            self._published_total.labels(val)
-            self._failures_total.labels(val)
-            self._process_duration.labels(val)
-            self._publish_duration.labels(val)
-            self._processed_timeout_total.labels(val)
+            EXTRACTED_TOTAL.labels(val)
+            ARCHIVE_SIZE.labels(val)
+            PROCESSED_TOTAL.labels(val)
+            PUBLISHED_TOTAL.labels(val)
+            FAILURES_TOTAL.labels(val)
+            PROCESS_DURATION.labels(val)
+            PUBLISH_DURATION.labels(val)
+            PROCESSED_TIMEOUT_TOTAL.labels(val)
