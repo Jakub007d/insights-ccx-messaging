@@ -136,6 +136,12 @@ objects:
             outgoing_topics:
               OLS: ${KAFKA_OUTGOING_TOPIC_OLS}
               DEFAULT: ${KAFKA_OUTGOING_TOPIC_IO}
+        watchers:
+          - name: ccx_messaging.watchers.payload_tracker_watcher.PayloadTrackerWatcher
+            kwargs:
+              bootstrap.servers: ${KAFKA_SERVER}
+              topic: ${PAYLOAD_TRACKER_TOPIC}
+              service_name: multiplexor
         logging:
           version: 1
           disable_existing_loggers: false
