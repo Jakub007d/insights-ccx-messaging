@@ -128,7 +128,7 @@ class StatsWatcher(ConsumerWatcher, EngineWatcher):
     def on_recv(self, input_msg):
         """On received event handler."""
         LOG.debug("Receiving 'on_recv' callback")
-        self._recv_total.inc()
+        RECV_TOTAL.inc()
 
         self._start_time = time.time()
         self._reset_times()
