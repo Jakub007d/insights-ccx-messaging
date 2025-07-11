@@ -15,6 +15,7 @@ from ccx_messaging.utils.clowder import apply_clowder_config
 from ccx_messaging.utils.logging import setup_watchtower
 from ccx_messaging.utils.sentry import init_sentry
 
+'''
 tracemalloc.start()
 def _memory_monitor(interval=60):
     proc = psutil.Process()
@@ -27,7 +28,7 @@ def _memory_monitor(interval=60):
             "rss=%.1f MB  traced=%.1f MB  peak=%.1f MB",
             rss/1024/1024, current/1024/1024, peak/1024/1024,
         )
-
+'''
 def parse_args() -> argparse.Namespace:
     """Parse the command line options and arguments."""
     parser = argparse.ArgumentParser()
@@ -69,7 +70,7 @@ def apply_config(config) -> int:
         app_builder = AppBuilder(manifest)
         logging_config = app_builder.service["logging"]
         logging.config.dictConfig(logging_config)
-        threading.Thread(target=_memory_monitor, args=(60,), daemon=True).start()
+        #threading.Thread(target=_memory_monitor, args=(60,), daemon=True).start()
         print_version()
         try:
             consumer = app_builder.build_app()
